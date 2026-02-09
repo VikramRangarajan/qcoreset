@@ -1,0 +1,196 @@
+"""
+Properly implemented ResNet-s for CIFAR10 as described in paper [1].
+
+The implementation and structure of this file is hugely influenced by [2]
+which is implemented for ImageNet and doesn't have option A for identity.
+Moreover, most of the implementations on the web is copy-paste from
+torchvision's resnet and has wrong number of params.
+
+Proper ResNet-s for CIFAR10 (for fair comparision and etc.) has following
+number of layers and parameters:
+
+name      | layers | params
+ResNet20  |    20  | 0.27M
+ResNet32  |    32  | 0.46M
+ResNet44  |    44  | 0.66M
+ResNet56  |    56  | 0.85M
+ResNet110 |   110  |  1.7M
+ResNet1202|  1202  | 19.4m
+
+which this implementation indeed has.
+
+Reference:
+[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+    Deep Residual Learning for Image Recognition. arXiv:1512.03385
+[2] https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
+
+If you use this implementation in you work, please don't forget to mention the
+author, Yerlan Idelbayev.
+"""
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.nn.init as init
+from . import config
+
+__all__ = [
+    "ResNet",
+    "ResNet20",
+]
+# USE_NOISE = False  # Set to True to enable noise
+
+def _weights_init(m):
+    if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
+        init.kaiming_normal_(m.weight)
+
+class LambdaLayer(nn.Module):
+    def __init__(self, lambd):
+        super(LambdaLayer, self).__init__()
+        self.lambd = lambd
+
+    def forward(self, x):
+        return self.lambd(x)
+
+
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1, option="A", std=0.01):
+        super(BasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(
+            in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False
+        )
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=1, padding=1, bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.noise_std = std
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != planes:
+            if option == "A":
+                """
+                For CIFAR10 ResNet paper uses option A.
+                """
+                self.shortcut = LambdaLayer(
+                    lambda x: F.pad(
+                        x[:, :, ::2, ::2],
+                        (0, 0, 0, 0, planes // 4, planes // 4),
+                        "constant",
+                        0,
+                    )
+                )
+            elif option == "B":
+                self.shortcut = nn.Sequential(
+                    nn.Conv2d(
+                        in_planes,
+                        self.expansion * planes,
+                        kernel_size=1,
+                        stride=stride,
+                        bias=False,
+                    ),
+                    nn.BatchNorm2d(self.expansion * planes),
+                )
+
+    def noisy_shortcut(self, shortcut, x, noise_std):
+        out = x
+        if isinstance(shortcut, nn.Sequential):
+            for layer in shortcut:
+                if isinstance(layer, nn.Conv2d):
+                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
+                    out = F.conv2d(out, noisy_weight, bias=None, stride=layer.stride, padding=layer.padding)
+                elif isinstance(layer, nn.BatchNorm2d):
+                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
+                    noisy_bias = layer.bias + torch.randn_like(layer.bias) * noise_std
+                    out = F.batch_norm(out, layer.running_mean, layer.running_var, noisy_weight, noisy_bias, layer.training)
+        else:
+            out = shortcut(out)
+        return out
+
+    def forward(self, x):
+        # Apply noise to conv1 if USE_NOISE is enabled
+        if config.USE_NOISE:
+            noisy_weight = self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
+            out = F.conv2d(x, noisy_weight, None, stride=self.conv1.stride, padding=self.conv1.padding)
+            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
+                               self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                               self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                               self.bn1.training)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+
+        # Apply noise to conv2
+        if config.USE_NOISE:
+            noisy_weight = self.conv2.weight + torch.randn_like(self.conv2.weight) * self.noise_std
+            out = F.conv2d(out, noisy_weight, None, stride=self.conv2.stride, padding=self.conv2.padding)
+            out = F.batch_norm(out, self.bn2.running_mean, self.bn2.running_var, 
+                               self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
+                               self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
+                               self.bn2.training)
+        else:
+            out = self.bn2(self.conv2(out))
+
+        if config.USE_NOISE:
+            shortcut = self.noisy_shortcut(self.shortcut, x, self.noise_std)
+        else:
+            shortcut = self.shortcut(x)
+        out += shortcut
+        out = F.relu(out)
+        return out
+
+
+class ResNet(nn.Module):
+    def __init__(self, block, num_blocks, num_classes=10, std=0):
+        super(ResNet, self).__init__()
+        self.in_planes = 16
+        self.noise_std = std
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
+        self.linear = nn.Linear(64, num_classes)
+        
+        self.apply(_weights_init)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1] * (num_blocks - 1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride, std=self.noise_std))
+            self.in_planes = planes * block.expansion
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x, last=False):
+        if config.USE_NOISE:
+            noisy_weight = self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
+            out = F.conv2d(x, noisy_weight, None, stride=self.conv1.stride, padding=self.conv1.padding)
+            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
+                             self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                             self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                             self.bn1.training)
+        else:
+            out = F.relu(self.bn1(self.conv1(x)))
+
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = F.avg_pool2d(out, out.size()[3])
+        last_input = out.view(out.size(0), -1)
+    
+        # Apply noise to the final linear layer
+        if config.USE_NOISE:
+            noisy_weight = self.linear.weight + torch.randn_like(self.linear.weight) * self.noise_std
+            noisy_bias = self.linear.bias + torch.randn_like(self.linear.bias) * self.noise_std if self.linear.bias is not None else None
+            out = F.linear(last_input, noisy_weight, noisy_bias)
+        else:
+            out = self.linear(last_input)
+
+        if last:
+            return out, last_input
+        else:
+            return out
+def ResNet20(num_classes=10, std = 0):
+    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes, std=std)
+
