@@ -1,5 +1,4 @@
-from functools import partial
-from typing import Any, Callable, List, Optional, Type, Union
+from typing import Callable, List, Optional, Type, Union
 from . import config
 import torch
 import torch.nn as nn

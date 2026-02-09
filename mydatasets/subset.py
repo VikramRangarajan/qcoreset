@@ -5,7 +5,7 @@ import torch.distributed as dist
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
-from utils import submodular, craig, submodular_ensemble
+from utils import submodular, craig
 
 
 def distribute_subset(subset, weight, ordering_time, similarity_time, pred_time, args):

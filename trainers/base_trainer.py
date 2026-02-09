@@ -2,7 +2,6 @@ import argparse
 import sys
 import time
 
-import numpy as np
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -10,7 +9,6 @@ from tqdm import tqdm
 import wandb
 from mydatasets import IndexedDataset
 from utils import GradualWarmupScheduler
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
 from torch.optim import AdamW
 
 

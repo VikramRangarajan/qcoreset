@@ -1,8 +1,5 @@
-from functools import partial
 from itertools import combinations
 import numpy as np
-from tqdm import tqdm
-import torch
 
 
 def compute_ratio_err(pred_list, label):

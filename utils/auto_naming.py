@@ -22,8 +22,8 @@ def get_exp_name(args):
     # args.save_dir += f"_batchsize{args.batch_size}_{grd}"
 
     if args.selection_method == "crest":
-        args.save_dir += f"_coreset" if args.approx_with_coreset else f"_subset"
-        args.save_dir += f"_momentum" if args.approx_moment else f""
+        args.save_dir += "_coreset" if args.approx_with_coreset else "_subset"
+        args.save_dir += "_momentum" if args.approx_moment else ""
         grd += f"-batchnummul{args.batch_num_mul}-interalmul{args.interval_mul}"
         grd += f"_thresh-factor{args.check_thresh_factor}"
     if args.selection_method == "ensemble":

@@ -2,12 +2,10 @@ import logging
 import os
 import time
 from warnings import simplefilter
-import copy
 import numpy as np
 import torch
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from transformers import RobertaForSequenceClassification
 from transformers import AutoModelForSequenceClassification
-from torch.optim import AdamW
 import timm
 from utils import get_args
 import torch.nn.parallel

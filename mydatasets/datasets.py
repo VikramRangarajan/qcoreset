@@ -1,18 +1,10 @@
-import os
 import numpy as np
-import pickle
 from .tinyimagenet import TinyImageNet
-from sklearn.metrics import accuracy_score
-import torch
-from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
-from torch.utils.data import DataLoader
-from torch.optim import AdamW
 import torchvision
 import torchvision.transforms as transforms
-from torchvision import datasets
 from datasets import load_dataset
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from transformers import RobertaTokenizer
 from transformers import AutoTokenizer
 
 
