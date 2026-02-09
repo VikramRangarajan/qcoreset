@@ -4,12 +4,12 @@ import time
 
 import torch
 import torch.nn as nn
+import trackio as wandb
+from torch.optim import AdamW
 from tqdm import tqdm
 
-import wandb
 from mydatasets import IndexedDataset
 from utils import GradualWarmupScheduler
-from torch.optim import AdamW
 
 
 class AverageMeter:

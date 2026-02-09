@@ -2,18 +2,22 @@ import logging
 import os
 import time
 from warnings import simplefilter
+
 import numpy as np
-import torch
-from transformers import RobertaForSequenceClassification
-from transformers import AutoModelForSequenceClassification
 import timm
-from utils import get_args
+import torch
 import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 import torchvision
-from mydatasets import IndexedDataset
+from transformers import (
+    AutoModelForSequenceClassification,
+    RobertaForSequenceClassification,
+)
+
 from models import *
+from mydatasets import IndexedDataset
+from utils import get_args
 
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
@@ -43,7 +47,7 @@ else:
     torch.manual_seed(args.seed)
 
 if args.use_wandb:
-    import wandb
+    import trackio as wandb
 
     name = "public version testing"
     wandb.init(project=name, config=args, name=args.save_dir.split("/")[-1])
