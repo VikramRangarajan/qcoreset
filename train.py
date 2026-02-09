@@ -22,6 +22,7 @@ from utils import get_args
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
 torch.backends.cuda.enable_math_sdp(True)
+torch.set_float32_matmul_precision("high")
 
 simplefilter(action="ignore", category=FutureWarning)
 np.seterr(all="ignore")

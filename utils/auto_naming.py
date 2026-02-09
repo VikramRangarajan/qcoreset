@@ -29,14 +29,6 @@ def get_exp_name(args):
     if args.selection_method == "ensemble":
         args.save_dir += f"_ensemble_selection_method-{args.selection_method_ensemble}"
         args.save_dir += f"_ensemble_size-{args.ensemble_num}"
-        args.save_dir += (
-            f"_update_separate-{args.update_separate}" if args.update_separate else ""
-        )
-        args.save_dir += (
-            f"_use_same_initialization-{args.use_same_initialization}"
-            if args.use_same_initialization
-            else ""
-        )
     if args.selection_method == "single_spread":
         args.save_dir += f"noise_std-{args.noise_std}"
     if args.selection_method == "single_spread_bn":
