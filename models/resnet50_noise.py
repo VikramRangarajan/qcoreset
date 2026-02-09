@@ -1,9 +1,11 @@
 from typing import Callable, List, Optional, Type, Union
-from . import config
+
 import torch
 import torch.nn as nn
-from torch import Tensor
 import torch.nn.functional as F
+from torch import Tensor
+
+from . import config
 
 
 def conv3x3(
@@ -260,9 +262,9 @@ class ResNet(nn.Module):
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck) and m.bn3.weight is not None:
-                    nn.init.constant_(m.bn3.weight, 0)  # type: ignore[arg-type]
+                    nn.init.constant_(m.bn3.weight, 0)
                 elif isinstance(m, BasicBlock) and m.bn2.weight is not None:
-                    nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
+                    nn.init.constant_(m.bn2.weight, 0)
 
     def _make_layer(
         self,
@@ -355,7 +357,6 @@ def _resnet(
     num_classes=1000,
     std=0.0,
 ) -> ResNet:
-
     model = ResNet(block=block, layers=layers, num_classes=num_classes, std=std)
 
     return model

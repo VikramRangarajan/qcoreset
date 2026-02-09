@@ -50,7 +50,7 @@ class single_ensemble(SubsetTrainer):
         model: nn.Module,
         train_dataset: IndexedDataset,
         val_loader: DataLoader,
-        train_weights: torch.Tensor = None,
+        train_weights: torch.Tensor | None = None,
     ):
         super().__init__(args, model, train_dataset, val_loader, train_weights)
         self.train_indices = np.arange(len(self.train_dataset))

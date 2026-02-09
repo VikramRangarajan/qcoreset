@@ -26,13 +26,13 @@ class RandomTrainer(SubsetTrainer):
         # select a subset of the data
         self.num_selection += 1
         if self.args.selection_method == "random_full":
-            self.subset = np.random.choice(
+            self.subset = np.random.choice(  # type: ignore
                 len(self.train_dataset),
                 size=int(len(self.train_dataset)),
                 replace=False,
             )
         else:
-            self.subset = np.random.choice(
+            self.subset = np.random.choice(  # type: ignore
                 len(self.train_dataset),
                 size=int(len(self.train_dataset) * self.args.train_frac),
                 replace=False,

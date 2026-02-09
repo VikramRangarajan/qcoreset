@@ -1,1 +1,1 @@
-USE_NOISE = False
+USE_NOISE: bool = False

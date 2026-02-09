@@ -21,7 +21,7 @@ class CRESTTrainer(SubsetTrainer):
         model: nn.Module,
         train_dataset: IndexedDataset,
         val_loader: DataLoader,
-        train_weights: torch.Tensor = None,
+        train_weights: torch.Tensor | None = None,
     ):
         super().__init__(args, model, train_dataset, val_loader, train_weights)
         self.train_indices = np.arange(len(self.train_dataset))
@@ -44,7 +44,7 @@ class CRESTTrainer(SubsetTrainer):
         self.similarity_time = AverageMeter()
         # chnage efficient calculation for kernel
         if self.args.dataset == "snli" or self.args.dataset == "trec":
-            self.model.config._attn_implementation = "eager"
+            self.model.config._attn_implementation = "eager"  # type: ignore
 
     def _train_epoch(self, epoch: int):
         """
@@ -258,7 +258,7 @@ class CRESTTrainer(SubsetTrainer):
                 }
             )
 
-    def _check_approx_error(self, epoch: int, training_step: int) -> torch.Tensor:
+    def _check_approx_error(self, epoch: int, training_step: int):
         """
         Check the approximation error of the current batch
         :param epoch: current epoch

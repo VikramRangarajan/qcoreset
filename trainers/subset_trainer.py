@@ -40,25 +40,25 @@ class SubsetTrainer(BaseTrainer):
         self.datasize = len(train_dataset)
         self.num_selection = 0
 
-    def _select_from_subset(self) -> np.ndarray:
-        indices = []
-        for c in np.unique(self.train_target):
-            class_indices = np.intersect1d(
-                np.where(self.train_target == c)[0], self.unique
-            )
-            indices_per_class = np.random.choice(
-                class_indices,
-                size=int(
-                    np.ceil(
-                        self.datasize * self.args.train_frac / self.args.num_classes
-                    )
-                ),
-                replace=False,
-            )
-            indices.append(indices_per_class)
-        indices = np.concatenate(indices)
-
-        return indices
+    # def _select_from_subset(self) -> np.ndarray:
+    #     indices = []
+    #     for c in np.unique(self.train_target):
+    #         class_indices = np.intersect1d(
+    #             np.where(self.train_target == c)[0], self.unique
+    #         )
+    #         indices_per_class = np.random.choice(
+    #             class_indices,
+    #             size=int(
+    #                 np.ceil(
+    #                     self.datasize * self.args.train_frac / self.args.num_classes
+    #                 )
+    #             ),
+    #             replace=False,
+    #         )
+    #         indices.append(indices_per_class)
+    #     indices = np.concatenate(indices)
+    #
+    #     return indices
 
     def _update_train_loader_and_weights(self):
         self.train_weights = np.zeros(len(self.train_dataset))
@@ -126,7 +126,7 @@ class SubsetTrainer(BaseTrainer):
                     epoch,
                     self.args.epochs,
                     batch_idx * self.args.batch_size + len(data),
-                    len(self.train_loader.dataset),  # type: ignore
+                    len(self.train_loader.dataset),
                     100.0 * (batch_idx + 1) / len(self.train_loader),
                     loss.item(),
                     train_acc,

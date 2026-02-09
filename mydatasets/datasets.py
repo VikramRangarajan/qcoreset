@@ -259,7 +259,7 @@ def get_dataset(args, train=True, train_transform=True):
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
 
         def tokenize_fn(example):
-            return tokenizer(
+            return tokenizer(  # type: ignore
                 example["premise"],
                 example["hypothesis"],
                 truncation=True,
@@ -288,7 +288,7 @@ def get_dataset(args, train=True, train_transform=True):
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         def preprocess(example):
-            return tokenizer(example["text"], truncation=True, padding="max_length")
+            return tokenizer(example["text"], truncation=True, padding="max_length")  # type: ignore
 
         dataset = dataset.map(preprocess, batched=True)
         dataset = dataset.rename_column(label_type, "label")
