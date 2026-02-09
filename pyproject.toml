@@ -11,6 +11,7 @@ dependencies = [
     "scikit-learn>=1.8.0",
     "timm>=1.0.24",
     "torch>=2.10.0",
+    "torchao",
     "torchvision>=0.25.0",
     "tqdm>=4.67.3",
     "trackio>=0.15.0",
@@ -22,3 +23,6 @@ dev = [
     "ruff>=0.15.0",
     "ty>=0.0.15",
 ]
+
+[tool.uv.sources]
+torchao = { url = "https://download.pytorch.org/whl/nightly/cu128/torchao-0.17.0.dev20260209%2Bcu128-cp310-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl" }

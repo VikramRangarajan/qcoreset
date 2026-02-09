@@ -1,4 +1,5 @@
 import argparse
+
 from .auto_naming import get_exp_name
 
 
@@ -12,7 +13,6 @@ def parse_bool(v):
 
 
 def get_args():
-
     parser = argparse.ArgumentParser()
 
     # General options
@@ -302,6 +302,7 @@ def get_args():
         nargs="?",
         help="download pretrain vit or not",
     )
+    parser.add_argument("--qat", choices=["none", "torchao"], help="QAT method")
 
     args = parser.parse_args()
 
