@@ -117,6 +117,20 @@ def get_args():
         type=int,
         help="epoch to start subset selection",
     )
+    parser.add_argument(
+        "--compile",
+        default=True,
+        type=parse_bool,
+        const=True,
+        nargs="?",
+        help="Use torch.compile?",
+    )
+    parser.add_argument(
+        "--precision",
+        default="bf16-mixed",
+        choices=["32", "bf16-mixed", "16-mixed"],
+        help="Training precision (uses autocast and gradscaler)",
+    )
 
     # data augmentation options
     parser.add_argument(
@@ -302,6 +316,8 @@ def get_args():
         nargs="?",
         help="download pretrain vit or not",
     )
+
+    # QAT
     parser.add_argument("--qat", choices=["none", "torchao"], help="QAT method")
 
     args = parser.parse_args()

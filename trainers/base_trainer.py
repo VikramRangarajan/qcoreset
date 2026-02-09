@@ -54,6 +54,9 @@ class BaseTrainer:
         self.args = args
         self.model = model
 
+        if self.args.compile:
+            self.model = torch.compile(model)
+
         # if more than one GPU is available, use DataParallel
         if torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs")
