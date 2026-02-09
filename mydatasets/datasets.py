@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import torchvision
 import torchvision.transforms as transforms
 from datasets import load_dataset
@@ -136,7 +137,8 @@ def get_dataset(args, train=True, train_transform=True):
                     [
                         T.RandomResizedCrop(224),
                         T.RandomHorizontalFlip(),
-                        T.ToImageTensor(),
+                        T.ToImage(),
+                        T.ToDtype(torch.float32, scale=True),
                         T.Normalize(mean=imagenet_mean, std=imagenet_std),
                     ]
                 )
@@ -161,7 +163,8 @@ def get_dataset(args, train=True, train_transform=True):
                     [
                         T.Resize(256),
                         T.CenterCrop(224),
-                        T.ToImageTensor(),
+                        T.ToImage(),
+                        T.ToDtype(torch.float32, scale=True),
                         T.Normalize(mean=imagenet_mean, std=imagenet_std),
                     ]
                 )

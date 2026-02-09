@@ -27,3 +27,6 @@ dev = [
     "ty>=0.0.15",
 ]
 
+[tool.ty.rules]
+no-matching-overload = "ignore"
+not-subscriptable = "ignore"

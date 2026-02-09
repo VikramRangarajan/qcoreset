@@ -14,7 +14,7 @@ class GradualWarmupScheduler(_LRScheduler):
         after_scheduler: after target_epoch, use this scheduler(eg. ReduceLROnPlateau)
     """
 
-    def __init__(self, optimizer, multiplier, total_epoch, after_scheduler=None):
+    def __init__(self, optimizer, multiplier, total_epoch, after_scheduler):
         self.multiplier = multiplier
         if self.multiplier < 1.0:
             raise ValueError("multiplier should be greater thant or equal to 1.")

@@ -1,6 +1,7 @@
 import argparse
 import sys
 import time
+from typing import cast
 
 import torch
 import torch.nn as nn
@@ -52,10 +53,10 @@ class BaseTrainer:
         """
 
         self.args = args
-        self.model = model
+        self.model: nn.Module = model
 
         if self.args.compile:
-            self.model = torch.compile(model)
+            self.model = cast(nn.Module, torch.compile(model))
 
         # if more than one GPU is available, use DataParallel
         if torch.cuda.device_count() > 1:

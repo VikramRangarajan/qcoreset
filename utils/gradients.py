@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.optim.optimizer import Optimizer
 
@@ -85,7 +86,7 @@ class Adahessian(Optimizer):
 
         return hutchinson_trace, reduced_grads
 
-    def step(self, momentum=False):
+    def step(self, momentum=False):  # type: ignore
         """Performs a single approximation step.
         Arguments:
             momentum (bool, optional): enables the momentum technique (default: False)
