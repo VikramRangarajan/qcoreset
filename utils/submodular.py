@@ -2,6 +2,7 @@ import time
 import numpy as np
 from submodlib.functions.facilityLocation import FacilityLocationFunction
 
+
 # select among the class
 def faciliy_location_order(
     c, X, y, metric, num_per_class, weights=None, mode="sparse", num_n=128
@@ -45,6 +46,7 @@ def faciliy_location_order(
     sz[np.where(sz == 0)] = 1
 
     return class_indices[order], sz, greedy_time, S_time
+
 
 def get_orders_and_weights(
     B,
@@ -132,10 +134,8 @@ def get_orders_and_weights(
     ordering_time = np.max(greedy_times)
     similarity_time = np.max(similarity_times)
 
-    order_sz = [] 
-    weights_sz = (
-        []
-    )  
+    order_sz = []
+    weights_sz = []
     vals = order_mg, weights_mg, order_sz, weights_sz, ordering_time, similarity_time
     return vals
 
@@ -153,7 +153,10 @@ def greedy_merge(X, y, B, part_num, metric):
     order_mg_all, cluster_sizes_all, _, _, ordering_time, similarity_time = zip(
         *map(
             lambda p: get_orders_and_weights(
-                int(B / 2), X[part_indices[p], :], metric, y=y[part_indices[p]],
+                int(B / 2),
+                X[part_indices[p], :],
+                metric,
+                y=y[part_indices[p]],
             ),
             np.arange(part_num),
         )
@@ -174,7 +177,11 @@ def greedy_merge(X, y, B, part_num, metric):
         ordering_time_merge,
         similarity_time_merge,
     ) = get_orders_and_weights(
-        B, X[order_mg, :], metric, y=y[order_mg], weights=weights_mg,
+        B,
+        X[order_mg, :],
+        metric,
+        y=y[order_mg],
+        weights=weights_mg,
     )
 
     total_ordering_time = np.max(ordering_time) + ordering_time_merge

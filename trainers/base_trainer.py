@@ -27,9 +27,7 @@ class AverageMeter:
         self.sum = 0
         self.count = 0
 
-    def update(
-        self, val, n=1
-    ):  # n is the number of samples in the batch, default to 1
+    def update(self, val, n=1):  # n is the number of samples in the batch, default to 1
         """Update statistics"""
         self.val = val
         self.sum += val * n
@@ -39,7 +37,7 @@ class AverageMeter:
 
 class BaseTrainer:
     def __init__(
-        self, 
+        self,
         args: argparse.Namespace,
         model: nn.Module,
         train_dataset: IndexedDataset,
@@ -70,24 +68,33 @@ class BaseTrainer:
             batch_size=self.args.batch_size,
             shuffle=True,
             num_workers=self.args.num_workers,
-            pin_memory=True
+            pin_memory=True,
         )
         self.val_loader = val_loader
         if train_weights is not None:
             self.train_weights = train_weights
         else:
             self.train_weights = torch.ones(len(self.train_dataset))
-            
+
         self.train_weights = self.train_weights.to(self.args.device)
 
         # the default optimizer is SGD
-        if self.args.dataset == "snli" or self.args.arch == 'vit' or self.args.dataset == "trec":
-            self.optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        if (
+            self.args.dataset == "snli"
+            or self.args.arch == "vit"
+            or self.args.dataset == "trec"
+        ):
+            self.optimizer = AdamW(
+                model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+            )
         else:
             self.optimizer = torch.optim.SGD(
-                self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum = self.args.momentum
+                self.model.parameters(),
+                lr=args.lr,
+                weight_decay=args.weight_decay,
+                momentum=self.args.momentum,
             )
-        if self.args.arch == 'vit':
+        if self.args.arch == "vit":
             lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
                 self.optimizer,
                 milestones=[70, 90],
@@ -125,7 +132,6 @@ class BaseTrainer:
         self.batch_backward_time = AverageMeter()
         self.val_time = AverageMeter()
 
-
     def train(self):
         """
         Train the model
@@ -148,9 +154,10 @@ class BaseTrainer:
                         "val_loss": self.val_loss,
                         "val_acc": self.val_acc,
                         "lr": self.optimizer.param_groups[0]["lr"],
-                        "val_time":self.val_time.avg
-                    })
-                
+                        "val_time": self.val_time.avg,
+                    }
+                )
+
             self.lr_scheduler.step()
 
     def _forward_and_backward(self, data, target, data_idx):
@@ -158,7 +165,7 @@ class BaseTrainer:
 
         # train model with the current batch and record forward and backward time
         forward_start = time.time()
-        if self.args.dataset != 'snli' and self.args.dataset != 'trec':
+        if self.args.dataset != "snli" and self.args.dataset != "trec":
             output = self.model(data)
         else:
             output = self.model(**data).logits
@@ -176,12 +183,12 @@ class BaseTrainer:
 
         # update training loss and accuracy
         train_acc = (output.argmax(dim=1) == target).float().mean().item()
-        if self.args.dataset != 'snli' and self.args.dataset != 'trec':
+        if self.args.dataset != "snli" and self.args.dataset != "trec":
             self.train_loss.update(loss.item(), data.size(0))
             self.train_acc.update(train_acc, data.size(0))
         else:
             self.train_loss.update(loss.item(), output.shape[0])
-            self.train_acc.update(train_acc, output.shape[0]) 
+            self.train_acc.update(train_acc, output.shape[0])
 
         return loss, train_acc
 
@@ -191,11 +198,12 @@ class BaseTrainer:
 
         data_start = time.time()
         # use tqdm to display a smart progress bar
-        pbar = tqdm(enumerate(self.train_loader), total=len(self.train_loader), file=sys.stdout)
+        pbar = tqdm(
+            enumerate(self.train_loader), total=len(self.train_loader), file=sys.stdout
+        )
         for batch_idx, (data, target, data_idx) in enumerate(pbar):
-
             # load data to device and record data loading time
-            if self.args.dataset != 'snli' and self.args.dataset != 'trec':
+            if self.args.dataset != "snli" and self.args.dataset != "trec":
                 data, target = data.to(self.args.device), target.to(self.args.device)
             else:
                 data = {k: v.to(self.args.device) for k, v in data.items()}
@@ -215,14 +223,13 @@ class BaseTrainer:
                     self.args.epochs,
                     batch_idx * self.args.batch_size + len(data),
                     len(self.train_loader.dataset),
-                    100.0 * (batch_idx+1) / len(self.train_loader),
+                    100.0 * (batch_idx + 1) / len(self.train_loader),
                     loss.item(),
                     train_acc,
                 )
             )
 
             data_start = time.time()
-
 
     def _val_epoch(self, epoch):
         self.model.eval()
@@ -232,8 +239,11 @@ class BaseTrainer:
         val_start = time.time()
         with torch.no_grad():
             for _, (data, target, _) in enumerate(self.val_loader):
-                if self.args.dataset != "snli" and self.args.dataset != 'trec':
-                    data, target = data.to(self.args.device), target.to(self.args.device)
+                if self.args.dataset != "snli" and self.args.dataset != "trec":
+                    data, target = (
+                        data.to(self.args.device),
+                        target.to(self.args.device),
+                    )
                     output = self.model(data)
                 else:
                     data = {k: v.to(self.args.device) for k, v in data.items()}
@@ -251,7 +261,7 @@ class BaseTrainer:
         self.val_loss = val_loss
         self.val_acc = val_acc
         val_end = time.time()
-        self.val_time.update(val_end-val_start)
+        self.val_time.update(val_end - val_start)
 
     def _save_checkpoint(self, epoch=None):
         if epoch is not None:
@@ -267,11 +277,12 @@ class BaseTrainer:
                 "val_loss": self.val_loss,
                 "val_acc": self.val_acc,
                 "args": self.args,
-                }, 
-            save_path)
-        
+            },
+            save_path,
+        )
+
         self.args.logger.info("Checkpoint saved to {}".format(save_path))
-        
+
     def _load_checkpoint(self, epoch):
         save_path = self.args.save_dir + "/model_epoch_{}.pt".format(epoch)
         checkpoint = torch.load(save_path)
@@ -284,7 +295,6 @@ class BaseTrainer:
         self.args = checkpoint["args"]
 
         self.args.logger.info("Checkpoint loaded from {}".format(save_path))
-
 
     def _log_epoch(self, epoch):
         self.args.logger.info(
@@ -312,22 +322,21 @@ class BaseTrainer:
         self.batch_forward_time.reset()
         self.batch_backward_time.reset()
 
-
     def get_model(self):
         return self.model
-    
+
     def get_train_loss(self):
         return self.train_loss.avg
-    
+
     def get_train_acc(self):
         return self.train_acc.avg
-    
+
     def get_val_loss(self):
         return self.val_loss.avg
-    
+
     def get_val_acc(self):
         return self.val_acc.avg
-    
+
     def get_train_time(self):
         # return a dict of data loading, forward and backward time
         return {
@@ -335,4 +344,3 @@ class BaseTrainer:
             "forward_time": self.batch_forward_time.avg,
             "backward_time": self.batch_backward_time.avg,
         }
-    

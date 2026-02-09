@@ -3,7 +3,7 @@ from .subset_trainer import *
 
 class RandomTrainer(SubsetTrainer):
     def __init__(
-        self, 
+        self,
         args: argparse.Namespace,
         model: nn.Module,
         train_dataset: IndexedDataset,
@@ -18,15 +18,14 @@ class RandomTrainer(SubsetTrainer):
         self.num_selection += 1
         if self.args.selection_method == "random_full":
             self.subset = np.random.choice(
-                len(self.train_dataset), 
+                len(self.train_dataset),
                 size=int(len(self.train_dataset)),
-                replace=False
+                replace=False,
             )
         else:
             self.subset = np.random.choice(
-                len(self.train_dataset), 
+                len(self.train_dataset),
                 size=int(len(self.train_dataset) * self.args.train_frac),
-                replace=False
+                replace=False,
             )
         self.subset_weights = np.ones(len(self.subset))
-    

@@ -6,7 +6,10 @@ import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
 
-def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
+
+def conv3x3(
+    in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1
+) -> nn.Conv2d:
     """3x3 convolution with padding"""
     return nn.Conv2d(
         in_planes,
@@ -19,9 +22,11 @@ def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, d
         dilation=dilation,
     )
 
+
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
 
 class BasicBlock(nn.Module):
     expansion: int = 1
@@ -91,7 +96,7 @@ class Bottleneck(nn.Module):
         base_width: int = 64,
         dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
-        std: float = 0
+        std: float = 0,
     ) -> None:
         super().__init__()
         if norm_layer is None:
@@ -119,36 +124,57 @@ class Bottleneck(nn.Module):
                 if isinstance(layer, nn.Conv2d):
                     out = layer(out)
                 elif isinstance(layer, nn.BatchNorm2d):
-                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
+                    noisy_weight = (
+                        layer.weight + torch.randn_like(layer.weight) * noise_std
+                    )
                     noisy_bias = layer.bias + torch.randn_like(layer.bias) * noise_std
-                    out = F.batch_norm(out, layer.running_mean, layer.running_var, noisy_weight, noisy_bias, layer.training)
+                    out = F.batch_norm(
+                        out,
+                        layer.running_mean,
+                        layer.running_var,
+                        noisy_weight,
+                        noisy_bias,
+                        layer.training,
+                    )
         else:
             out = downsample(out)
         return out
-    
+
     def forward(self, x: Tensor) -> Tensor:
         identity = x
 
         if config.USE_NOISE:
             out = self.conv1(x)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                               self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                               self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                               self.bn1.training)
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
             out = self.relu(out)
 
             out = self.conv2(out)
-            out = F.batch_norm(out, self.bn2.running_mean, self.bn2.running_var, 
-                               self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
-                               self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
-                               self.bn2.training)
+            out = F.batch_norm(
+                out,
+                self.bn2.running_mean,
+                self.bn2.running_var,
+                self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
+                self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
+                self.bn2.training,
+            )
             out = self.relu(out)
 
             out = self.conv3(out)
-            out = F.batch_norm(out, self.bn3.running_mean, self.bn3.running_var, 
-                               self.bn3.weight + torch.randn_like(self.bn3.weight) * self.noise_std,
-                               self.bn3.bias + torch.randn_like(self.bn3.bias) * self.noise_std,
-                               self.bn3.training)
+            out = F.batch_norm(
+                out,
+                self.bn3.running_mean,
+                self.bn3.running_var,
+                self.bn3.weight + torch.randn_like(self.bn3.weight) * self.noise_std,
+                self.bn3.bias + torch.randn_like(self.bn3.bias) * self.noise_std,
+                self.bn3.training,
+            )
             shortcut = self.noisy_shortcut(self.downsample, x, self.noise_std)
             out += shortcut
             out = self.relu(out)
@@ -203,14 +229,22 @@ class ResNet(nn.Module):
             )
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(
+            3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+        )
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0])
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1])
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2])
+        self.layer2 = self._make_layer(
+            block, 128, layers[1], stride=2, dilate=replace_stride_with_dilation[0]
+        )
+        self.layer3 = self._make_layer(
+            block, 256, layers[2], stride=2, dilate=replace_stride_with_dilation[1]
+        )
+        self.layer4 = self._make_layer(
+            block, 512, layers[3], stride=2, dilate=replace_stride_with_dilation[2]
+        )
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
@@ -254,7 +288,15 @@ class ResNet(nn.Module):
         layers = []
         layers.append(
             block(
-                self.inplanes, planes, stride, downsample, self.groups, self.base_width, previous_dilation, norm_layer, std = self.noise_std
+                self.inplanes,
+                planes,
+                stride,
+                downsample,
+                self.groups,
+                self.base_width,
+                previous_dilation,
+                norm_layer,
+                std=self.noise_std,
             )
         )
         self.inplanes = planes * block.expansion
@@ -267,7 +309,7 @@ class ResNet(nn.Module):
                     base_width=self.base_width,
                     dilation=self.dilation,
                     norm_layer=norm_layer,
-                    std = self.noise_std
+                    std=self.noise_std,
                 )
             )
 
@@ -277,10 +319,14 @@ class ResNet(nn.Module):
         # See note [TorchScript super()]
         if config.USE_NOISE:
             out = self.conv1(x)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                             self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                             self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                             self.bn1.training)
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
             out = self.relu(out)
             out = self.maxpool(out)
         else:
@@ -307,13 +353,16 @@ class ResNet(nn.Module):
 def _resnet(
     block: Type[Union[BasicBlock, Bottleneck]],
     layers: List[int],
-    num_classes = 1000,
-    std = 0.0
+    num_classes=1000,
+    std=0.0,
 ) -> ResNet:
-    
+
     model = ResNet(block=block, layers=layers, num_classes=num_classes, std=std)
 
     return model
 
+
 def ResNet50_noise_bn(num_classes, std):
-    return _resnet(block=Bottleneck,num_classes=num_classes, std=std, layers=[3, 4, 6, 3])
+    return _resnet(
+        block=Bottleneck, num_classes=num_classes, std=std, layers=[3, 4, 6, 3]
+    )

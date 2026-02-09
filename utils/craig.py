@@ -16,6 +16,7 @@ import sklearn.metrics
 SEED = 100
 EPS = 1e-8
 
+
 class FacilityLocation:
     def __init__(self, D, V, alpha=1.0, gamma=0.0):
         """
@@ -125,7 +126,6 @@ def lazy_greedy(F, ndx, B):
     return sset, vals
 
 
-
 def similarity(X, metric):
     """Computes the similarity between each pair of examples in X.
 
@@ -182,9 +182,7 @@ def get_facility_location_submodular_order(
         print(
             f"Calculating ordering with SMTK... part size: {len(S)}, B: {B}", flush=True
         )
-        np.save(
-            f"tmp/{no}/{smtk}-{c}", S
-        )  # todo:try thread for greedi
+        np.save(f"tmp/{no}/{smtk}-{c}", S)  # todo:try thread for greedi
         if stoch_greedy > 0:
             p = subprocess.check_output(
                 f"/home/yuyang/smtk-master{no}/build/smraiz -sumsize {B} \
@@ -289,7 +287,7 @@ def get_orders_and_weights(
         )
         # print("not equal_num")
 
-    print(f'Greedy: selecting {num_per_class} elements')
+    print(f"Greedy: selecting {num_per_class} elements")
 
     order_mg_all, cluster_sizes_all, greedy_times, similarity_times = zip(
         *map(
@@ -321,15 +319,11 @@ def get_orders_and_weights(
             weights_mg = np.append(weights_mg, cluster_sizes_all[c][ndx])
     order_mg = np.array(order_mg, dtype=np.int32)
 
-    weights_mg = np.array(
-        weights_mg, dtype=np.float32
-    )  
+    weights_mg = np.array(weights_mg, dtype=np.float32)
     ordering_time = np.max(greedy_times)
     similarity_time = np.max(similarity_times)
 
-    order_sz = [] 
-    weights_sz = (
-        []
-    )  
+    order_sz = []
+    weights_sz = []
     vals = order_mg, weights_mg, order_sz, weights_sz, ordering_time, similarity_time
     return vals

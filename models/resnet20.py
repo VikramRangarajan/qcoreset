@@ -27,6 +27,7 @@ Reference:
 If you use this implementation in you work, please don't forget to mention the
 author, Yerlan Idelbayev.
 """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -39,9 +40,11 @@ __all__ = [
 ]
 # USE_NOISE = False  # Set to True to enable noise
 
+
 def _weights_init(m):
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         init.kaiming_normal_(m.weight)
+
 
 class LambdaLayer(nn.Module):
     def __init__(self, lambd):
@@ -97,12 +100,29 @@ class BasicBlock(nn.Module):
         if isinstance(shortcut, nn.Sequential):
             for layer in shortcut:
                 if isinstance(layer, nn.Conv2d):
-                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
-                    out = F.conv2d(out, noisy_weight, bias=None, stride=layer.stride, padding=layer.padding)
+                    noisy_weight = (
+                        layer.weight + torch.randn_like(layer.weight) * noise_std
+                    )
+                    out = F.conv2d(
+                        out,
+                        noisy_weight,
+                        bias=None,
+                        stride=layer.stride,
+                        padding=layer.padding,
+                    )
                 elif isinstance(layer, nn.BatchNorm2d):
-                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
+                    noisy_weight = (
+                        layer.weight + torch.randn_like(layer.weight) * noise_std
+                    )
                     noisy_bias = layer.bias + torch.randn_like(layer.bias) * noise_std
-                    out = F.batch_norm(out, layer.running_mean, layer.running_var, noisy_weight, noisy_bias, layer.training)
+                    out = F.batch_norm(
+                        out,
+                        layer.running_mean,
+                        layer.running_var,
+                        noisy_weight,
+                        noisy_bias,
+                        layer.training,
+                    )
         else:
             out = shortcut(out)
         return out
@@ -110,23 +130,47 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         # Apply noise to conv1 if USE_NOISE is enabled
         if config.USE_NOISE:
-            noisy_weight = self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
-            out = F.conv2d(x, noisy_weight, None, stride=self.conv1.stride, padding=self.conv1.padding)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                               self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                               self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                               self.bn1.training)
+            noisy_weight = (
+                self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
+            )
+            out = F.conv2d(
+                x,
+                noisy_weight,
+                None,
+                stride=self.conv1.stride,
+                padding=self.conv1.padding,
+            )
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
         else:
             out = F.relu(self.bn1(self.conv1(x)))
 
         # Apply noise to conv2
         if config.USE_NOISE:
-            noisy_weight = self.conv2.weight + torch.randn_like(self.conv2.weight) * self.noise_std
-            out = F.conv2d(out, noisy_weight, None, stride=self.conv2.stride, padding=self.conv2.padding)
-            out = F.batch_norm(out, self.bn2.running_mean, self.bn2.running_var, 
-                               self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
-                               self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
-                               self.bn2.training)
+            noisy_weight = (
+                self.conv2.weight + torch.randn_like(self.conv2.weight) * self.noise_std
+            )
+            out = F.conv2d(
+                out,
+                noisy_weight,
+                None,
+                stride=self.conv2.stride,
+                padding=self.conv2.padding,
+            )
+            out = F.batch_norm(
+                out,
+                self.bn2.running_mean,
+                self.bn2.running_var,
+                self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
+                self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
+                self.bn2.training,
+            )
         else:
             out = self.bn2(self.conv2(out))
 
@@ -150,7 +194,7 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
         self.linear = nn.Linear(64, num_classes)
-        
+
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -164,12 +208,24 @@ class ResNet(nn.Module):
 
     def forward(self, x, last=False):
         if config.USE_NOISE:
-            noisy_weight = self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
-            out = F.conv2d(x, noisy_weight, None, stride=self.conv1.stride, padding=self.conv1.padding)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                             self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                             self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                             self.bn1.training)
+            noisy_weight = (
+                self.conv1.weight + torch.randn_like(self.conv1.weight) * self.noise_std
+            )
+            out = F.conv2d(
+                x,
+                noisy_weight,
+                None,
+                stride=self.conv1.stride,
+                padding=self.conv1.padding,
+            )
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
         else:
             out = F.relu(self.bn1(self.conv1(x)))
 
@@ -178,11 +234,18 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = F.avg_pool2d(out, out.size()[3])
         last_input = out.view(out.size(0), -1)
-    
+
         # Apply noise to the final linear layer
         if config.USE_NOISE:
-            noisy_weight = self.linear.weight + torch.randn_like(self.linear.weight) * self.noise_std
-            noisy_bias = self.linear.bias + torch.randn_like(self.linear.bias) * self.noise_std if self.linear.bias is not None else None
+            noisy_weight = (
+                self.linear.weight
+                + torch.randn_like(self.linear.weight) * self.noise_std
+            )
+            noisy_bias = (
+                self.linear.bias + torch.randn_like(self.linear.bias) * self.noise_std
+                if self.linear.bias is not None
+                else None
+            )
             out = F.linear(last_input, noisy_weight, noisy_bias)
         else:
             out = self.linear(last_input)
@@ -191,6 +254,7 @@ class ResNet(nn.Module):
             return out, last_input
         else:
             return out
-def ResNet20(num_classes=10, std = 0):
-    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes, std=std)
 
+
+def ResNet20(num_classes=10, std=0):
+    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes, std=std)

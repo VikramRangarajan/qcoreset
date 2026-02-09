@@ -27,6 +27,7 @@ Reference:
 If you use this implementation in you work, please don't forget to mention the
 author, Yerlan Idelbayev.
 """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -39,9 +40,11 @@ __all__ = [
 ]
 # USE_NOISE = False  # Set to True to enable noise
 
+
 def _weights_init(m):
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         init.kaiming_normal_(m.weight)
+
 
 class LambdaLayer(nn.Module):
     def __init__(self, lambd):
@@ -99,9 +102,18 @@ class BasicBlock(nn.Module):
                 if isinstance(layer, nn.Conv2d):
                     out = layer(out)
                 elif isinstance(layer, nn.BatchNorm2d):
-                    noisy_weight = layer.weight + torch.randn_like(layer.weight) * noise_std
+                    noisy_weight = (
+                        layer.weight + torch.randn_like(layer.weight) * noise_std
+                    )
                     noisy_bias = layer.bias + torch.randn_like(layer.bias) * noise_std
-                    out = F.batch_norm(out, layer.running_mean, layer.running_var, noisy_weight, noisy_bias, layer.training)
+                    out = F.batch_norm(
+                        out,
+                        layer.running_mean,
+                        layer.running_var,
+                        noisy_weight,
+                        noisy_bias,
+                        layer.training,
+                    )
         else:
             out = shortcut(out)
         return out
@@ -109,16 +121,24 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         if config.USE_NOISE:
             out = self.conv1(x)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                               self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                               self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                               self.bn1.training)
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
             out = F.relu(out)
             out = self.conv2(out)
-            out = F.batch_norm(out, self.bn2.running_mean, self.bn2.running_var, 
-                               self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
-                               self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
-                               self.bn2.training)
+            out = F.batch_norm(
+                out,
+                self.bn2.running_mean,
+                self.bn2.running_var,
+                self.bn2.weight + torch.randn_like(self.bn2.weight) * self.noise_std,
+                self.bn2.bias + torch.randn_like(self.bn2.bias) * self.noise_std,
+                self.bn2.training,
+            )
             shortcut = self.noisy_shortcut(self.shortcut, x, self.noise_std)
             out += shortcut
             out = F.relu(out)
@@ -157,10 +177,14 @@ class ResNet(nn.Module):
     def forward(self, x, last=False):
         if config.USE_NOISE:
             out = self.conv1(x)
-            out = F.batch_norm(out, self.bn1.running_mean, self.bn1.running_var, 
-                             self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
-                             self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
-                             self.bn1.training)
+            out = F.batch_norm(
+                out,
+                self.bn1.running_mean,
+                self.bn1.running_var,
+                self.bn1.weight + torch.randn_like(self.bn1.weight) * self.noise_std,
+                self.bn1.bias + torch.randn_like(self.bn1.bias) * self.noise_std,
+                self.bn1.training,
+            )
             out = F.relu(out)
         else:
             out = F.relu(self.bn1(self.conv1(x)))
@@ -170,16 +194,16 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = F.avg_pool2d(out, out.size()[3])
         last_input = out.view(out.size(0), -1)
-    
+
         out = self.linear(last_input)
         return out
-    
+
     def update_noise(self, noise):
         self.noise_std = noise
         for layer in self.hold:
             for block in layer:
                 block.noise_std = noise
 
-def ResNet20_noise_bn(num_classes=10, std = 0):
-    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes, std=std)
 
+def ResNet20_noise_bn(num_classes=10, std=0):
+    return ResNet(BasicBlock, [3, 3, 3], num_classes=num_classes, std=std)

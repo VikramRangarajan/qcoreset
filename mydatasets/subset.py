@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 from utils import submodular, craig, submodular_ensemble
 
+
 def distribute_subset(subset, weight, ordering_time, similarity_time, pred_time, args):
     size = torch.Tensor([len(subset)]).int().cuda()
     subset_sizes = [
@@ -59,15 +60,19 @@ def distribute_subset(subset, weight, ordering_time, similarity_time, pred_time,
         torch.Tensor([ordering_time, similarity_time, pred_time]).float().cuda()
     )
     dist.reduce(
-        reduced_times, 0, op=dist.ReduceOp.MAX,
+        reduced_times,
+        0,
+        op=dist.ReduceOp.MAX,
     )
 
     return subset, weight, reduced_times
+
 
 class SubsetMode(Enum):
     GREEDY = 1
     RANDOM = 2
     CLUSTER = 3
+
 
 def cluster_features(train_dir, train_num, normalize):
     data = datasets.ImageFolder(
@@ -87,6 +92,7 @@ def cluster_features(train_dir, train_num, normalize):
     )
 
     return preds, labels
+
 
 class SubsetGenerator:
     def __init__(self, greedy, smtk):
@@ -140,7 +146,7 @@ class SubsetGenerator:
         self,
         preds,
         epoch,
-        B, # batch size
+        B,  # batch size
         idx,
         targets,
         subset_printer=None,
@@ -161,7 +167,13 @@ class SubsetGenerator:
                 _,
                 ordering_time,
                 similarity_time,
-            ) = submodular.greedy_merge(preds, fl_labels, B, 5, "euclidean",)
+            ) = submodular.greedy_merge(
+                preds,
+                fl_labels,
+                B,
+                5,
+                "euclidean",
+            )
         else:
             if use_submodlib:
                 (
@@ -196,12 +208,12 @@ class SubsetGenerator:
             weight = np.array(weight)
 
         return subset, weight, ordering_time, similarity_time
-    
+
     def generate_subset_perbatch(
         self,
         preds,
         epoch,
-        B, # batch size
+        B,  # batch size
         idx,
         targets,
         subset_printer=None,
@@ -212,7 +224,7 @@ class SubsetGenerator:
         if subset_printer is not None:
             subset_printer.print_selection(self.mode, epoch)
 
-        fl_labels = targets[idx] - np.min(targets[idx]) #TODO: don't get it
+        fl_labels = targets[idx] - np.min(targets[idx])  # TODO: don't get it
 
         if len(fl_labels) > 50000:
             (
@@ -222,7 +234,13 @@ class SubsetGenerator:
                 _,
                 ordering_time,
                 similarity_time,
-            ) = submodular.greedy_merge(preds, fl_labels, B, 5, "euclidean",)
+            ) = submodular.greedy_merge(
+                preds,
+                fl_labels,
+                B,
+                5,
+                "euclidean",
+            )
         else:
             if use_submodlib:
                 (
@@ -254,6 +272,7 @@ class SubsetGenerator:
             subset = np.array(idx[subset])  # (Note): idx
             weight = np.array(weight)
         return subset, weight, ordering_time, similarity_time
+
 
 class WeightedSubset(Dataset):
     r"""
