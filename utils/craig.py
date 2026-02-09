@@ -84,7 +84,6 @@ def lazy_greedy(F, ndx, B):
     - ndx: indices of all points
     - B: int, number of points to select
     """
-    TOL = 1e-6
     eps = 1e-15
     curVal = 0
     sset = []
@@ -148,14 +147,12 @@ def similarity(X, metric):
 
     elapsed = time.time() - start
 
-    L0 = 0
-
     if metric == "cosine":
         S = 1 - dists
     elif metric == "euclidean" or metric == "l1":
         m = np.max(dists)
         S = m - dists
-        L0 = m * len(dists)
+        m * len(dists)
     else:
         raise ValueError(f"unknown metric: {metric}")
 
@@ -222,7 +219,7 @@ def get_facility_location_submodular_order(
             sz[max_loc] += 1
         else:
             sz[max_loc] += weights[i]
-    collected = gc.collect()
+    gc.collect()
     return order, sz, greedy_time, F_val
 
 

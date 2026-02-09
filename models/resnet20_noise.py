@@ -32,11 +32,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
+
 from . import config
 
 __all__ = [
     "ResNet",
-    "ResNet20",
+    "ResNet20_noise_bn",
 ]
 # USE_NOISE = False  # Set to True to enable noise
 

@@ -1,12 +1,11 @@
 import numpy as np
-from .tinyimagenet import TinyImageNet
-from torchvision.datasets import ImageFolder
 import torchvision
 import torchvision.transforms as transforms
 from datasets import load_dataset
-from transformers import RobertaTokenizer
-from transformers import AutoTokenizer
+from torchvision.datasets import ImageFolder
+from transformers import AutoTokenizer, RobertaTokenizer
 
+from .tinyimagenet import TinyImageNet
 
 use_v2 = hasattr(torchvision.transforms, "v2")
 
@@ -315,7 +314,9 @@ def corrupt_labels(dataset, corruption_ratio=0.2, num_labels=3):
     ).astype(int)
     for i in corrupt_indices:
         true_label = corrupted[int(i)]["label"]
-        new_label = np.random.choice([l for l in range(num_labels) if l != true_label])
+        new_label = np.random.choice(
+            [lab for lab in range(num_labels) if lab != true_label]
+        )
         corrupted[int(i)]["label"] = new_label
 
     return corrupted, corrupt_indices
