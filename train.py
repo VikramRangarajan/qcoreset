@@ -15,7 +15,14 @@ from transformers import (
     RobertaForSequenceClassification,
 )
 
-from models import *
+from models import (
+    LeNet,
+    ResNet18,
+    ResNet18_noise_bn,
+    ResNet20,
+    ResNet20_noise_bn,
+    ResNet50_noise_bn,
+)
 from mydatasets import IndexedDataset
 from utils import get_args
 

@@ -1,7 +1,18 @@
 # a trainer class that inherits from BaseTrainer and only trains on a subset of the data selected at the beginning of every epoch
-from .base_trainer import *
-from torch.utils.data import Subset, DataLoader
-from mydatasets import SubsetGenerator
+import argparse
+import sys
+import time
+
+import numpy as np
+import torch
+import torch.nn as nn
+import trackio as wandb
+from torch.utils.data import DataLoader, Subset
+from tqdm import tqdm
+
+from mydatasets import IndexedDataset, SubsetGenerator
+
+from .base_trainer import BaseTrainer
 
 
 class SubsetTrainer(BaseTrainer):
@@ -49,7 +60,6 @@ class SubsetTrainer(BaseTrainer):
         return indices
 
     def _update_train_loader_and_weights(self):
-
         self.train_weights = np.zeros(len(self.train_dataset))
         self.subset_weights = (
             self.subset_weights / np.sum(self.subset_weights) * len(self.subset)

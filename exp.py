@@ -10,7 +10,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent.absolute()
+PROJECT_ROOT = Path(__file__).parent.absolute()
 EXPERIMENTS: dict[int | str, Callable] = {}
 
 
@@ -71,8 +71,6 @@ def submit_job(
         uv run train.py {flags}
         """
     )
-    print(slurm_script)
-    exit(0)
     with NamedTemporaryFile(suffix=f"{name}.sh", delete=False) as f:
         pass
 
@@ -83,6 +81,19 @@ def submit_job(
 @exp(-100)
 def example():
     submit_job({"compile": True, "batch_size": 128}, "test")
+
+
+@exp(1)
+def baseline():
+    submit_job(
+        {
+            "selection_method": "random_full",
+            "dataset": "cifar10",
+            "arch": "resnet20",
+            "corrupt_ratio": 0.1,
+        },
+        "baseline",
+    )
 
 
 def main():
