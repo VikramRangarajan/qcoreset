@@ -17,12 +17,12 @@ class RandomTrainer(SubsetTrainer):
         model: nn.Module,
         train_dataset: IndexedDataset,
         val_loader: DataLoader,
-        train_weights: torch.Tensor = None,
+        train_weights: torch.Tensor | None = None,
     ):
         super().__init__(args, model, train_dataset, val_loader, train_weights)
         self.args = args
 
-    def _select_subset(self, epoch, training_steps):
+    def _select_subset(self, epoch, training_steps):  # type: ignore
         # select a subset of the data
         self.num_selection += 1
         if self.args.selection_method == "random_full":

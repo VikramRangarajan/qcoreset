@@ -41,7 +41,7 @@ class BaseTrainer:
         model: nn.Module,
         train_dataset: IndexedDataset,
         val_loader: torch.utils.data.DataLoader,
-        train_weights: torch.Tensor = None,
+        train_weights: torch.Tensor | None = None,
     ):
         """
         Base trainer class

@@ -30,3 +30,5 @@ dev = [
 [tool.ty.rules]
 no-matching-overload = "ignore"
 not-subscriptable = "ignore"
+possibly-missing-attribute = "ignore"
+unsupported-operator = "ignore"

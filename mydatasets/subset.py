@@ -1,11 +1,13 @@
 from enum import Enum
+
 import numpy as np
 import torch
 import torch.distributed as dist
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
-from utils import submodular, craig
+
+from utils import craig, submodular
 
 
 def distribute_subset(subset, weight, ordering_time, similarity_time, pred_time, args):
@@ -287,10 +289,10 @@ class WeightedSubset(Dataset):
         self.indices = indices
         self.weights = weights
 
-    def __getitem__(self, idx):
-        image = self.dataset[self.indices[idx]][0]
-        target = self.dataset[self.indices[idx]][1]
-        return image, target, self.weights[idx]
+    def __getitem__(self, index):
+        image = self.dataset[self.indices[index]][0]
+        target = self.dataset[self.indices[index]][1]
+        return image, target, self.weights[index]
 
     def __len__(self):
         return len(self.indices)

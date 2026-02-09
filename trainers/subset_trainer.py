@@ -2,6 +2,7 @@
 import argparse
 import sys
 import time
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -22,7 +23,7 @@ class SubsetTrainer(BaseTrainer):
         model: nn.Module,
         train_dataset: IndexedDataset,
         val_loader: DataLoader,
-        train_weights: torch.Tensor = None,
+        train_weights: torch.Tensor | None = None,
     ):
         super().__init__(args, model, train_dataset, val_loader, train_weights)
         if args.dataset == "svhn":
@@ -125,7 +126,7 @@ class SubsetTrainer(BaseTrainer):
                     epoch,
                     self.args.epochs,
                     batch_idx * self.args.batch_size + len(data),
-                    len(self.train_loader.dataset),
+                    len(self.train_loader.dataset),  # type: ignore
                     100.0 * (batch_idx + 1) / len(self.train_loader),
                     loss.item(),
                     train_acc,
@@ -173,6 +174,7 @@ class SubsetTrainer(BaseTrainer):
                     "num_selection": self.num_selection,
                 }
             )
+        self.subset: Sequence[int]
         pass
 
     def _get_num_selection(self):

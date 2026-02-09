@@ -30,7 +30,7 @@ class FacilityLocation:
         self.curMax = np.zeros(len(D))
         self.gains = []
         self.alpha = alpha
-        self.f_norm = self.alpha / self.f_norm(V)
+        self.f_norm = self.alpha / self.f_norm(V)  # type: ignore
         self.norm = 1.0 / self.inc(V, [])
         self.gamma = gamma / len(self.D)  # encouraging diversity
 
