@@ -179,7 +179,7 @@ class BaseTrainer:
         # train model with the current batch and record forward and backward time
         forward_start = time.time()
         with torch.autocast(
-            device_type=self.model.device,
+            device_type=self.args.device,
             enabled=self.mp_enabled,
             dtype=self.autocast_dtype,
         ):
@@ -202,13 +202,14 @@ class BaseTrainer:
         self.batch_backward_time.update(backward_time)
 
         # update training loss and accuracy
-        train_acc = (output.argmax(dim=1) == target).float().mean()
-        if self.args.dataset != "snli" and self.args.dataset != "trec":
-            self.train_loss.update(loss, data.size(0))
-            self.train_acc.update(train_acc, data.size(0))
-        else:
-            self.train_loss.update(loss, output.shape[0])
-            self.train_acc.update(train_acc, output.shape[0])
+        with torch.no_grad():
+            train_acc = (output.argmax(dim=1) == target).float().mean()
+            if self.args.dataset != "snli" and self.args.dataset != "trec":
+                self.train_loss.update(loss, data.size(0))
+                self.train_acc.update(train_acc, data.size(0))
+            else:
+                self.train_loss.update(loss, output.shape[0])
+                self.train_acc.update(train_acc, output.shape[0])
 
         return loss, train_acc
 
