@@ -189,6 +189,8 @@ def main(args):
         )
 
     trainer.train()
+    if args.use_wandb:
+        wandb.finish()
 
 
 if __name__ == "__main__":

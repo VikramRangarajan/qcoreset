@@ -91,6 +91,7 @@ def baseline():
             "dataset": "cifar10",
             "arch": "resnet20",
             "corrupt_ratio": 0.1,
+            "epochs": 10,
         },
         "baseline",
     )

@@ -199,37 +199,6 @@ class single_ensemble(SubsetTrainer):
         self.model.train()
         config.USE_NOISE = False
 
-    def _forward_and_backward(self, data, target, data_idx):
-        self.optimizer.zero_grad()
-
-        # train model with the current batch and record forward and backward time
-        forward_start = time.time()
-        if self.args.dataset != "snli" and self.args.dataset != "trec":
-            output = self.model(data)
-        else:
-            output = self.model(**data).logits
-        forward_time = time.time() - forward_start
-        self.batch_forward_time.update(forward_time)
-
-        loss = self.train_criterion(output, target)
-        loss = (loss * self.train_weights[data_idx]).mean()
-
-        backward_start = time.time()
-        loss.backward()
-        self.optimizer.step()
-        backward_time = time.time() - backward_start
-        self.batch_backward_time.update(backward_time)
-
-        # update training loss and accuracy
-        train_acc = (output.argmax(dim=1) == target).float().mean().item()
-        if self.args.dataset != "snli" and self.args.dataset != "trec":
-            self.train_loss.update(loss.item(), data.size(0))
-            self.train_acc.update(train_acc, data.size(0))
-        else:
-            self.train_loss.update(loss.item(), output.shape[0])
-            self.train_acc.update(train_acc, output.shape[0])
-        return loss, train_acc
-
     def _drop_learned_data(self, epoch: int, training_step: int, indices: np.ndarray):
         """
         Drop the learned data points
