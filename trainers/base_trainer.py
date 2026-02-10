@@ -133,6 +133,14 @@ class BaseTrainer:
         self.batch_forward_time = AverageMeter()
         self.batch_backward_time = AverageMeter()
         self.val_time = AverageMeter()
+        precision = self.args.precision
+        self.mp_enabled = precision != "32"
+        self.grad_scaler = torch.amp.GradScaler(enabled=self.mp_enabled)
+        self.autocast_dtype = {
+            "32": torch.float32,
+            "bf16-mixed": torch.bfloat16,
+            "16-mixed": torch.float16,
+        }[precision]
 
     def train(self):
         """
@@ -162,24 +170,34 @@ class BaseTrainer:
 
             self.lr_scheduler.step()
 
+    def pre_backward_hook(self, loss):
+        pass
+
     def _forward_and_backward(self, data, target, data_idx):
         self.optimizer.zero_grad()
 
         # train model with the current batch and record forward and backward time
         forward_start = time.time()
-        if self.args.dataset != "snli" and self.args.dataset != "trec":
-            output = self.model(data)
-        else:
-            output = self.model(**data).logits
+        with torch.autocast(
+            device_type=self.model.device,
+            enabled=self.mp_enabled,
+            dtype=self.autocast_dtype,
+        ):
+            if self.args.dataset != "snli" and self.args.dataset != "trec":
+                output = self.model(data)
+            else:
+                output = self.model(**data).logits
+            loss = self.train_criterion(output, target)
+            loss = (loss * self.train_weights[data_idx]).mean()
         forward_time = time.time() - forward_start
         self.batch_forward_time.update(forward_time)
 
-        loss = self.train_criterion(output, target)
-        loss = (loss * self.train_weights[data_idx]).mean()
+        self.pre_backward_hook(loss)
 
         backward_start = time.time()
-        loss.backward()
-        self.optimizer.step()
+        self.grad_scaler.scale(loss).backward()
+        self.grad_scaler.step(self.optimizer)
+        self.grad_scaler.update()
         backward_time = time.time() - backward_start
         self.batch_backward_time.update(backward_time)
 
