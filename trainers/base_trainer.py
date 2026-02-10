@@ -184,12 +184,12 @@ class BaseTrainer:
         self.batch_backward_time.update(backward_time)
 
         # update training loss and accuracy
-        train_acc = (output.argmax(dim=1) == target).float().mean().item()
+        train_acc = (output.argmax(dim=1) == target).float().mean()
         if self.args.dataset != "snli" and self.args.dataset != "trec":
-            self.train_loss.update(loss.item(), data.size(0))
+            self.train_loss.update(loss, data.size(0))
             self.train_acc.update(train_acc, data.size(0))
         else:
-            self.train_loss.update(loss.item(), output.shape[0])
+            self.train_loss.update(loss, output.shape[0])
             self.train_acc.update(train_acc, output.shape[0])
 
         return loss, train_acc
@@ -217,19 +217,6 @@ class BaseTrainer:
 
             # train model with the current batch and record forward and backward time
             loss, train_acc = self._forward_and_backward(data, target, data_idx)
-
-            # update progress bar
-            pbar.set_description(
-                "Train Epoch: {}/{} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAcc: {:.6f}".format(
-                    epoch,
-                    self.args.epochs,
-                    batch_idx * self.args.batch_size + len(data),
-                    len(self.train_loader.dataset),
-                    100.0 * (batch_idx + 1) / len(self.train_loader),
-                    loss.item(),
-                    train_acc,
-                )
-            )
 
             data_start = time.time()
 

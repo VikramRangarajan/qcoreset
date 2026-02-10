@@ -120,19 +120,6 @@ class SubsetTrainer(BaseTrainer):
 
             data_start = time.time()
 
-            # update progress bar
-            pbar.set_description(
-                "Train Epoch: {}/{} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAcc: {:.6f}".format(
-                    epoch,
-                    self.args.epochs,
-                    batch_idx * self.args.batch_size + len(data),
-                    len(self.train_loader.dataset),
-                    100.0 * (batch_idx + 1) / len(self.train_loader),
-                    loss.item(),
-                    train_acc,
-                )
-            )
-
         if self.args.cache_dataset and self.args.clean_cache_iteration:
             self.train_dataset.clean()
             self._update_train_loader_and_weights()
